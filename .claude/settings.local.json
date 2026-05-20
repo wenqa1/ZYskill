@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"e:\\\\\\\\lianxi\\\\\\\\skill\\\\\\\\PhotoForge-skill\\\\\\\\agents\\\\\\\\\")",
+      "Bash(ls \"e:\\\\\\\\lianxi\\\\\\\\skill\\\\\\\\\")",
+      "Bash(ls \"C:\\\\\\\\Users\\\\\\\\26934\\\\\\\\.claude\\\\\\\\skills\\\\\\\\\" 2>/dev/null || echo \"skills dir not found in .claude\")",
+      "Read(//c/Users/26934/.claude/skills/**)",
+      "Bash(ls -la \"C:\\\\\\\\Users\\\\\\\\26934\\\\\\\\.claude\\\\\\\\skills\\\\\\\\photo-forge\\\\\\\\\")",
+      "Bash(ls \"C:\\\\\\\\Users\\\\\\\\26934\\\\\\\\.claude\\\\\\\\skills\\\\\\\\photo-forge\\\\\\\\agents\\\\\\\\\")",
+      "Bash(diff \"e:\\\\\\\\lianxi\\\\\\\\skill\\\\\\\\PhotoForge-skill\\\\\\\\SKILL.md\" \"C:\\\\\\\\Users\\\\\\\\26934\\\\\\\\.claude\\\\\\\\skills\\\\\\\\photo-forge\\\\\\\\SKILL.md\")",
+      "Bash(diff \"e:\\\\\\\\lianxi\\\\\\\\skill\\\\\\\\PhotoForge-skill\\\\\\\\todo.md\" \"C:\\\\\\\\Users\\\\\\\\26934\\\\\\\\.claude\\\\\\\\skills\\\\\\\\photo-forge\\\\\\\\todo.md\")",
+      "Bash(ls \"C:\\\\\\\\Users\\\\\\\\26934\\\\\\\\.claude\\\\\\\\skills\\\\\\\\\")",
+      "Bash(ls \"e:\\\\\\\\lianxi\\\\\\\\skill\\\\\\\\示例skill\\\\\\\\\")",
+      "Bash(ls \"C:\\\\\\\\Users\\\\\\\\26934\\\\\\\\.claude\\\\\\\\skills\\\\\\\\postgres-patterns\")",
+      "Bash(ls \"C:\\\\\\\\Users\\\\\\\\26934\\\\\\\\.claude\\\\\\\\skills\\\\\\\\django-patterns\")",
+      "Bash(ls \"C:\\\\\\\\Users\\\\\\\\26934\\\\\\\\.claude\\\\\\\\skills\\\\\\\\rust-patterns\")"
+    ]
+  }
+}
