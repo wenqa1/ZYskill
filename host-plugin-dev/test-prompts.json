@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "name": "wa_new_tool_plugin",
+    "prompt": "创建一个 WA 插件，在发送框输入“天气 上海”时拦截发送，去请求天气接口并把结果发回当前聊天。要求生成正确的 info.prop、main.java，以及只有在这个宿主需要时才生成额外文件。",
+    "expected": "应选择 WA，使用 onClickSendBtn，生成 WA 的 name/author/version/updateTime 元数据，并允许 README.md 或 config.prop 仅按 WA 习惯出现。"
+  },
+  {
+    "id": 2,
+    "name": "qf_new_group_plugin",
+    "prompt": "新建一个 QF 插件，收到群消息“菜单”时回复“已收到”，并补一个长按消息菜单项用于打印消息内容。要求输出完整插件目录结构。",
+    "expected": "应选择 QF，生成 main.java、info.prop、desc.txt，使用 id/pluginName/author/versionCode，主回调用 onMsg，菜单用 addMenuItem 对应回调，不应生成 README.md 或 WA/FK/QS 字段。"
+  },
+  {
+    "id": 3,
+    "name": "qs_fix_existing_plugin",
+    "prompt": "修复一个 QS 插件：它当前误用了 QF 的 pluginName/versionCode 和 sendReplyMsg(...)。请改成 QS 正确写法，并保持原有业务逻辑不变。",
+    "expected": "应识别为 QS 修复任务，把 metadata 改成 name/type/version/author/id/date/tags，把回复调用改成 QS 文档里的 sendReply(...) 或同宿主正确 helper，不应保留 QF 词语。"
+  },
+  {
+    "id": 4,
+    "name": "fk_port_from_wa",
+    "prompt": "把一个 WA 的工具类插件迁移成 FK 插件，原逻辑是监听文本命令并回复结果。迁移时只保留业务逻辑，重写宿主绑定层，输出 FK 正确目录和入口。",
+    "expected": "应识别为跨宿主迁移，保留业务逻辑但切换到 FK 的 info.prop、main.java、onMsg/onMsgMenu 等宿主绑定，不应沿用 WA 的 onHandleMsg、getTargetTalker、updateTime、README.md。"
+  },
+  {
+    "id": 5,
+    "name": "shared_bsh_style_defaults_qs",
+    "prompt": "新建一个 QS 插件小函数，里面有不会被重新赋值的局部变量、一个会递增的计数器、模板字符串输出和 JSON 解析。要求遵守当前通用层的 BeanShell 默认写法，同时不要写多余 import。",
+    "expected": "应默认用 `val` 定义不会重赋值的局部变量，只在递增计数器等可变场景用 `var`；应允许省略尾分号；应优先使用字符串模板；不应为 `org.json` 补冗余 import。"
+  },
+  {
+    "id": 6,
+    "name": "shared_bsh_style_defaults_wa",
+    "prompt": "新建一个 WA 插件小函数，里面有不会被重新赋值的局部变量、一个会递增的计数器、模板字符串输出和 JSON 解析。要求遵守当前通用层的 BeanShell 默认写法，同时不要写多余 import。",
+    "expected": "应默认用 `val` 定义不会重赋值的局部变量，只在递增计数器等可变场景用 `var`；应允许省略尾分号；应优先使用字符串模板；不应为 `org.json` 补冗余 import。"
+  },
+  {
+    "id": 7,
+    "name": "http_model_split",
+    "prompt": "分别实现两个简单插件片段：一个 WA 插件调用网络接口后回消息，一个 QS 插件调用网络接口后回消息。要求都按各自宿主文档的 HTTP 模型来写。",
+    "expected": "WA 片段应使用异步 callback 风格 helper；QS 片段应使用同步 `httpGet(...)` 或同宿主文档里的直接返回写法。两者不应互相套用对方的 HTTP 模式。"
+  }
+]

@@ -1,0 +1,8 @@
+timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
+2026-05-17T00:00:00+08:00	baseline	host-plugin-dev	-	66	baseline	-	初始评估，发现全局默认模板偏WA且QF/QS缺少AI聚合入口	dry_run
+2026-05-17T00:20:00+08:00	manual-round1	host-plugin-dev	66	82	keep	structure	补齐QF/QS reference-ai，移除WA全局默认模板，改为按宿主分流	dry_run
+2026-05-17T00:40:00+08:00	manual-round2	host-plugin-dev	82	87	keep	workflow	将SKILL重写为宿主矩阵+truth-source+callback map，压缩冗余说明	dry_run
+2026-05-17T01:00:00+08:00	manual-round3	host-plugin-dev	87	90	keep	effect	补测试prompt与agent入口提示，消除README默认生成偏置	dry_run
+2026-05-17T13:43:10+0800	manual-round4	host-plugin-dev	90	93	keep	boundary	移除跨宿主HTTP异步默认假设，补充val/var与HTTP模型分离测试	dry_run
+2026-05-17T13:47:58+0800	manual-round5	host-plugin-dev	93	94	keep	validation	把val/var与冗余import检查推进到验证层，并拆分公共语法测试以降低评分歧义	dry_run
+2026-05-17T13:52:48+0800	manual-round6	host-plugin-dev	94	95	keep	full_test	基于A/B输出对比修正模板字符串仍被写成保守可选的问题	full_test

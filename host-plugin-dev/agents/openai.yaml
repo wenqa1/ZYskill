@@ -1,0 +1,4 @@
+interface:
+  display_name: "host plugin dev"
+  short_description: "Create and edit WA/QF/QS/FK-style host-script plugins with verified same-host metadata, callbacks, helper APIs, and file layouts."
+  default_prompt: "Use $host-plugin-dev to create, modify, port, or debug a WA/QF/QS/FK-style host plugin. Identify the target host first, generate only the files that host or workspace expects, use verified same-host callbacks and methods only, prefer explicit user-action callbacks for tool-style features when available, and keep passive handlers self-only unless the user explicitly asks to process other people's messages."
