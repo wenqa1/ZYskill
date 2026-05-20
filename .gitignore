@@ -1,2 +1,5 @@
-# 屏蔽示例 skill，不上传到本仓库
+# 本地配置
+.claude/
+
+# 屏蔽示例 skill
 示例skill/
