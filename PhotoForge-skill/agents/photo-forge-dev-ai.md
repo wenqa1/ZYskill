@@ -89,7 +89,7 @@ struct FaceAdjustParams {
   float skin_smooth = 0.5f;       // [0, 1] 磨皮强度
   float skin_whiten = 0.3f;       // [0, 1] 美白
   float skin_tone_unify = 0.0f;   // [0, 1] 肤色统一
-  float remove_acne = true;       // 是否祛痘
+  bool remove_acne = true;        // 是否祛痘
   float nose_thin = 0.0f;         // [-0.3, 0.3] 瘦鼻
   float chin_thin = 0.0f;         // [-0.3, 0.3] 下巴
 };

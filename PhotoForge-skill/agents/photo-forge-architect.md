@@ -2,7 +2,7 @@
 name: photo-forge-architect
 description: |
   PhotoForge 系统架构子智能体。定义模块接口、类设计和数据流。
-tools: Read, Write, Glob, Grep
+tools: Read, Edit, Write, Glob, Grep
 model: inherit
 permissionMode: acceptEdits
 ---
@@ -23,7 +23,7 @@ permissionMode: acceptEdits
 
 ### 2. 必读文件（按顺序）
 
-1. **主智能体提示词.md** — 理解整体架构约束和技术选型
+1. **SKILL.md** — 理解整体架构约束和技术选型
 2. **已有的接口定义** — 如果 docs/api.md 已存在，读它了解已定义的接口
 3. **已有的头文件** — 如果 src/ 下已有代码，理解当前进展
 4. **docs/lessons-learned.md** — 架构层面的经验教训
