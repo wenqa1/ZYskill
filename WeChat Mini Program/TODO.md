@@ -108,3 +108,4 @@
 |------|------|
 | 2026-05-25 | P0 全部完成（独立分包 / 全局 usingComponents / preloadRule / onShareTimeline / 生命周期清理） |
 | 2026-05-25 | P1 全部完成（基础库版本策略 / Behavior 模板 / dark mode / 自定义 tabBar / 启动性能） |
+| 2026-05-25 | 扩展全栈 Web 支持：新增 5 个 fs-* 子Agent，SKILL.md 和主智能体提示词增加全栈项目类型检测、Monorepo 骨架搭建、前后端批量开发循环、后端优先/前端继起的修正流程、全栈收尾检查、规则 35-45 |
