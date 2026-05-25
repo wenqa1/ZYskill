@@ -85,7 +85,36 @@ memory: project
 | L4 | data 字段类型 | data 是 plain object，properties 是带 type 的描述对象 |
 | L5 | observers 字段合法（component） | observers 的 key 是合法属性/data 路径 |
 
-#### 3.5 app.json 联动检查（每批结束附加一次）
+#### 3.5 WXS 模块检查
+
+| # | 检查项 | 通过标准 |
+|---|--------|----------|
+| X1 | WXS 文件语法 | 如存在 `.wxs` 文件，语法符合 ES5（无 `let`/`const`/箭头函数），使用 `module.exports` 导出 |
+| X2 | WXS 模块注册 | 如 wxml 中使用 `<wxs src="..." module="xxx" />`，对应路径 `.wxs` 文件存在 |
+| X3 | WXS 方法调用 | wxml 中调用的 WXS 方法在对应模块中已 `module.exports` |
+
+#### 3.6 组件高级配置检查
+
+| # | 检查项 | 通过标准 |
+|---|--------|----------|
+| C1 | styleIsolation 合规 | 组件 json 样式隔离值只使用 `isolated` / `apply-shared` / `shared` 三者之一 |
+| C2 | virtualHost 布尔值 | 如设置 `virtualHost`，值为 `true` 或 `false`（合法 JSON） |
+| C3 | pureDataPattern 合法 | 如设置 `pureDataPattern`，为正则表达式如 `/^_/` |
+| C4 | componentExport 行为 | 如使用 `wx://component-export`，组件已实现 `export()` 方法定义导出 |
+
+#### 3.7 Skyline 渲染引擎检查
+
+> 仅在检测到 app.json 的 `renderer` 为 `skyline` 时执行：
+
+| # | 检查项 | 通过标准 |
+|---|--------|----------|
+| K1 | 全局启用一致 | app.json 配置 `"renderer": "skyline"` + `"componentFramework": "glass-easel"` + `"lazyCodeLoading": "requiredComponents"` |
+| K2 | 页面配置 Skyline | 每个 page 的 json 必须配置 `"renderer": "skyline"` |
+| K3 | 页面禁用全局滚动 | 每个 page 的 json 必须配置 `"disableScroll": true`（Skyline 不支持全局滚动） |
+| K4 | 自定义导航栏 | 每个 page 的 json 必须配置 `"navigationStyle": "custom"`（Skyline 不支持原生导航栏） |
+| K5 | 无 WebView 残留属性 | 页面 wxml 中没有 `enablePullDownRefresh` 等与全局滚动相关的配置 |
+
+#### 3.8 app.json 联动检查（每批结束附加一次）
 
 > 仅当本批含 page 类型任务时执行：
 
@@ -99,7 +128,7 @@ memory: project
 
 **FAIL**：存在任何一项：
 - 关键违规（W5 HTML 标签 / J1 JSON 不合法 / J2 未注册组件 / L1 构造器错 / S1 四件套缺失）
-- 中等违规（W4 缺 wx:key / W1 节点超限 / J5 未追加到 pages）
+- 中等违规（W4 缺 wx:key / W1 节点超限 / J5 未追加到 pages / K1 全局配置不一致 / K2-K4 Skyline 页面配置缺失）
 - 同一任务上累计 ≥ 2 项低级违规
 
 ### 5. 输出测试报告

@@ -110,13 +110,36 @@ memory: project
 | W4 | 体积约束 | 主包 wxml/wxss/js 合计 ≤ 2MB；超过时需拆分到 subPackages（提示用户拆分，不强制 FAIL） |
 | W5 | 分包加载提示 | 若 page 位于 subPackages，跳转目标路径必须以 `/` 开头的绝对路径，禁止相对路径 |
 
+#### 3.7 Skyline 专属样式检查
+
+> 仅在检测到 app.json 的 `renderer` 为 `skyline` 时执行：
+
+| # | 检查项 | 通过标准 |
+|---|--------|----------|
+| S1 | scroll-view 替代滚动 | 页面不使用全局滚动（Skyline 不支持），所有滚动区域用 `<scroll-view scroll-y>` |
+| S2 | Worklet 优先 | 连续手势/动画优先使用 Worklet（`worklet:onscrollupdate`）而非 WXS 响应事件 |
+| S3 | 自定义导航栏高度 | 导航栏使用 `wx.getSystemInfoSync().statusBarHeight` 适配状态栏高度，保证不同机型一致 |
+| S4 | Skyline 特有组件 | 使用 `<grid-view>` 替代手动 flex 瀑布流；使用 `<sticky-header>` 替代手动吸顶计算 |
+| S5 | 共享元素动画 | 跨页面元素过渡使用框架级共享元素动画 API，而非手动实现 |
+| S6 | list-builder 使用 | 长列表（>100 项）使用 `<list-builder>` 而非 `<scroll-view>` 普通模式，利用节点回收优化性能 |
+
+#### 3.8 WXS 响应事件与动画检查
+
+| # | 检查项 | 通过标准 |
+|---|--------|----------|
+| T1 | WXS 不调 API | WXS 模块中不调用 `wx.*` API（`wx.request`、`wx.setStorage` 等） |
+| T2 | WXS 无异步 | WXS 中不使用 Promise/setTimeout（不支持异步操作） |
+| T3 | WXS 无副作用 | WXS 是纯函数，不修改全局变量，无 `setData` 调用 |
+| T4 | change:prop 配对 | 如使用 `change:prop` 监听属性变化，wxml 中对应变量已绑定 |
+| T5 | 动画性能选择 | 高频动画（帧率 > 30fps）用 CSS transition/animation 或 Worklet，避免 JS setData 驱动 |
+
 ### 4. 判定标准
 
 **PASS**：所有检查项通过，或仅有 LOW 级别建议
 
 **FAIL**：存在任何一项：
-- 关键违规（C2 禁用选择器 / B1 容器组件混用 / R1 写死 px 宽度）
-- 中等违规（≥ 2 项 C1 单位 / R3 触摸区域过小 / I2-I7 缺少关键交互反馈）
+- 关键违规（C2 禁用选择器 / B1 容器组件混用 / R1 写死 px 宽度 / T1 WXS 调 API）
+- 中等违规（≥ 2 项 C1 单位 / R3 触摸区域过小 / I2-I7 缺少关键交互反馈 / S1-S6 Skyline 模式下关键样式缺失）
 - 同一任务上累计 ≥ 3 项低级违规
 
 ### 5. 输出测试报告

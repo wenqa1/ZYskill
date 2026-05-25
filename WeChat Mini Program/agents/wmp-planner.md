@@ -125,6 +125,10 @@ mkdir -p {OUTPUT_DIR}/test-reports
 
 > **重要**：`pages` 数组初始化为空，由 wmp-dev 在开发每个 page 时按顺序追加。`tabBar.list` 也是空数组，开发到 tabBar 页时由 wmp-dev 补全。
 
+> **性能优化**：始终在 app.json 追加 `"lazyCodeLoading": "requiredComponents"`，该配置让小程序按需注入自定义组件代码，减少首屏渲染压力。
+
+> **隐私预备**：如需求文档涉及用户位置/相册/摄像头/手机号等权限，在 app.json 的 `permission` 字段预配置用途描述（如 `"scope.userLocation": { "desc": "获取您的位置以提供附近服务" }`）。主Agent后续会做隐私合规检查。
+
 #### ④ app.js — 全局逻辑
 
 ```javascript
@@ -257,6 +261,8 @@ page {
 ```
 
 > **appid 占位**：写入 `"touristappid"` 作为占位符，并在 dev-plan.md 末尾"待办事项"中提醒用户填入真实 appid。
+>
+> **Skyline 渲染引擎**：如需求文档要求高性能/流畅动画/自定义导航/复杂手势，在本步追加 `"renderer": "skyline"` + `"componentFramework": "glass-easel"` + `"rendererOptions"` 到 app.json。默认为传统 WebView 渲染。
 
 #### ⑦ sitemap.json — 索引配置
 

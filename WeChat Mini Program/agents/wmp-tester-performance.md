@@ -88,7 +88,16 @@ memory: project
 | RP5 | 动画选择 | 高频动画用 CSS animation 或 `wx.createAnimation`，不在 js 中频繁 setData 控制位置 |
 | RP6 | 隐藏元素 | `wx:if` vs `hidden`：频繁切换用 hidden，初次条件渲染用 wx:if |
 
-#### 3.5 安全与合规
+#### 3.5 WXS 与渲染线程性能
+
+| # | 检查项 | 通过标准 |
+|---|--------|----------|
+| W1 | WXS 沉降低频计算 | 列表渲染中的格式化/映射操作已从 JS 迁移到 WXS（如 `<wxs src="../../filters.wxs" module="f" />`），减少 setData 传递预处理数据 |
+| W2 | WXS 不阻塞视图 | WXS 中无大量复杂计算，避免阻塞视图层渲染 |
+| W3 | Worklet 优先（Skyline） | Skyline 模式下连续手势/滚动动画使用 Worklet（`worklet:onscrollupdate`）而非 WXS，获得 UI 线程级性能 |
+| W4 | lazyCodeLoading | app.json 已配置 `"lazyCodeLoading": "requiredComponents"`，减少首屏代码注入量 |
+
+#### 3.6 安全与合规
 
 | # | 检查项 | 通过标准 |
 |---|--------|----------|
@@ -100,7 +109,19 @@ memory: project
 | SE6 | eval/Function 禁用 | 不出现 eval / new Function 等动态代码执行 |
 | SE7 | 跨域跳转 | wx.navigateTo / redirectTo 的 url 不接收未校验的外部参数（防止恶意跳转） |
 
-#### 3.6 错误处理与降级
+#### 3.7 隐私合规检查
+
+| # | 检查项 | 通过标准 |
+|---|--------|----------|
+| PR1 | 隐私接口触发合规 | `wx.getUserProfile` / `wx.getPhoneNumber` / `wx.getLocation` / `wx.chooseImage` / `wx.startRecord` 等隐私接口只在 `bindtap` 等用户事件回调中调用，不在 `onLoad`/`onShow` 中出现 |
+| PR2 | desc 参数（getUserProfile） | `wx.getUserProfile` 调用时必须传入 `desc` 参数，声明用途 ≤ 30 字 |
+| PR3 | 拒绝授权降级 | 隐私接口拒绝后不中断非相关服务，提供游客模式或降级体验 |
+| PR4 | 拒绝后引导 | 可通过 `wx.showModal` 引导至 `wx.openSetting` 手动开启权限 |
+| PR5 | 隐私保护指引配置 | app.json 的 `permission` 字段已声明各权限用途描述 |
+| PR6 | 基础库隐私 API | 如使用基础库 2.32.3+，调用 `wx.getPrivacySetting` / `wx.requirePrivacyAuthorize` 等隐私辅助 API 需要在 app.json 启用 `"__usePrivacyCheck__": true` |
+| PR7 | 手机号仅企业 | `<button open-type="getPhoneNumber">` 调用的手机号接口仅企业认证账号可用，开发时已占位处理 |
+
+#### 3.8 错误处理与降级
 
 | # | 检查项 | 通过标准 |
 |---|--------|----------|
@@ -114,8 +135,8 @@ memory: project
 **PASS**：所有检查项通过，或仅有 LOW 级别建议
 
 **FAIL**：存在任何一项：
-- 关键违规（P1 直接赋值 data / N1 非 HTTPS / N2 直接调用 wx.request / SE1 硬编码密钥 / SE5 大量 console.log）
-- 中等违规（P2 多次 setData 未合并 / P6 高频 setData / N3 缺错误处理 / EH3 空数据未降级）
+- 关键违规（P1 直接赋值 data / N1 非 HTTPS / N2 直接调用 wx.request / SE1 硬编码密钥 / SE5 大量 console.log / PR1 隐私接口在 onLoad 调用 / PR2 getUserProfile 缺 desc）
+- 中等违规（P2 多次 setData 未合并 / P6 高频 setData / N3 缺错误处理 / EH3 空数据未降级 / PR3 拒绝授权后无降级 / W1 可迁移格式化未用 WXS）
 - 同一任务上累计 ≥ 3 项低级违规
 
 ### 5. 输出测试报告

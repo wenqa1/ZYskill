@@ -114,6 +114,41 @@ memory: project
 - component 的 json 必须 `"component": true`，并声明 `usingComponents`
 - 禁止在 json 里写注释（小程序 json 不支持注释）
 
+**组件高级特性原则**：
+- **styleIsolation**：组件 `.json` 中可设置 `"styleIsolation": "isolated"`（默认，样式完全隔离）、`"apply-shared"`（页面样式可影响组件）、`"shared"`（双向影响）；默认用 `isolated` 避免污染
+- **externalClasses**：组件可声明 `externalClasses: ['my-class']` 允许外部传入样式类，常用于卡片/按钮等可定制样式的组件
+- **virtualHost**（基础库 2.11.2+）：组件 `.json` 设置 `"virtualHost": true` 让自定义组件标签本身不参与 flex 布局，直接由内部第一层节点响应
+- **pureDataPattern**：组件 `.js` 中设置 `pureDataPattern: /^_/`，以下划线 `_` 开头的字段为纯数据字段，不参与渲染
+- **behaviors**：抽离组件间共有逻辑（如登录态检测、埋点上报）为 Behavior，通过 `behaviors: [behaviorName]` 混入
+- **relations**：父子组件间通过 `relations` 建立关系，配合 `getRelationNodes` 实现深度联动（如 `tabs` + `tab-panel` 组合）
+- **组件导出**（基础库 2.2.3+）：使用 `wx://component-export` behavior 暴露组件方法给父组件通过 `selectComponent` 调用
+
+**WXS 原则**：
+- WXS 运行在视图层，**不能调用任何 wx.* API**，不能修改 data，不支持 ES6+（用 `var` + function），不支持正则表达式
+- 适用于：金额/时间格式化、状态文本映射、列表数据预处理、频繁 touchmove 事件响应
+- 使用方式：外联 `.wxs` 文件通过 `<wxs src="../../utils/filters.wxs" module="filters" />` 引入，或内联 `<wxs module="m1">...</wxs>`
+- **WXS 响应事件**（基础库 2.4.4+）：通过 `change:prop` 监听属性变化，通过 `bindtouchmove="{{wxsName.touchmove}}"` 将事件处理下沉到视图层，减少线程通信
+- 当视图层需要回调逻辑层时，使用 `ownerInstance.callMethod('methodName', args)`
+
+**Skyline 渲染引擎原则**：
+- 当主Agent prompt 包含"使用 Skyline"时：
+  - app.json 必须配置：`"renderer": "skyline"` + `"componentFramework": "glass-easel"` + `"lazyCodeLoading": "requiredComponents"`
+  - 每个页面 `.json` 必须设置：`"renderer": "skyline"` + `"disableScroll": true` + `"navigationStyle": "custom"`（Skyline 不支持全局页面滚动和原生导航栏）
+  - 页面滚动必须用 `<scroll-view scroll-y>` 组件，**不能用页面级滚动**
+  - **Worklet 动画**：替代 WXS 处理连续手势/动画，通过 `worklet:onscrollupdate="handler"` 语法将动画逻辑运行在 UI 线程，延迟更低
+  - Skyline 特有组件：`<grid-view>`（瀑布流）、`<sticky-header>`（原生吸顶）、`<list-builder>`（长列表虚拟化）
+  - rich-text 新增 `mode="web-static"` 模式（基础库 3.7.7+）
+  - 共享元素动画：使用框架级 API 实现跨页面元素平滑过渡
+
+**隐私合规原则**：
+- 涉及 `wx.getUserProfile` / `wx.getPhoneNumber` / `wx.getLocation` / `wx.chooseImage` / `wx.startRecord` 等隐私接口时：
+  - **必须在用户主动点击事件的回调中调用**（bindtap 内），禁止在 onLoad/onShow 中调用
+  - `wx.getUserProfile` 必须传入 `desc` 参数（声明用途，≤30 字）
+  - 用户拒绝授权后不能中断非相关服务，应提供降级体验
+  - 拒绝后可通过 `wx.showModal` 引导至 `wx.openSetting` 手动开启
+  - 基础库 2.32.3+ 支持 `wx.getPrivacySetting` / `wx.requirePrivacyAuthorize` 等隐私辅助 API
+  - `<button open-type="getPhoneNumber">` 调用的手机号接口仅企业账号可用
+
 ### 4. 开发实现
 
 #### 4.1 page 开发流程
