@@ -113,15 +113,77 @@ memory: project
 - page 的 json 至少包含 `usingComponents`（即使为空对象 `{}`），可选 `navigationBarTitleText` 等覆盖配置
 - component 的 json 必须 `"component": true`，并声明 `usingComponents`
 - 禁止在 json 里写注释（小程序 json 不支持注释）
+- **全局 usingComponents**（基础库 2.20.1+）：app.json 顶层可声明 `usingComponents` 全局注册组件，所有 page/component 无需逐个声明即可使用。适用场景：全项目通用的 UI 组件（如自定义导航栏、加载占位组件）。权衡：全局注册会增大主包体积和代码分析难度，建议仅注册真正全局通用的组件
 
 **组件高级特性原则**：
 - **styleIsolation**：组件 `.json` 中可设置 `"styleIsolation": "isolated"`（默认，样式完全隔离）、`"apply-shared"`（页面样式可影响组件）、`"shared"`（双向影响）；默认用 `isolated` 避免污染
 - **externalClasses**：组件可声明 `externalClasses: ['my-class']` 允许外部传入样式类，常用于卡片/按钮等可定制样式的组件
 - **virtualHost**（基础库 2.11.2+）：组件 `.json` 设置 `"virtualHost": true` 让自定义组件标签本身不参与 flex 布局，直接由内部第一层节点响应
 - **pureDataPattern**：组件 `.js` 中设置 `pureDataPattern: /^_/`，以下划线 `_` 开头的字段为纯数据字段，不参与渲染
-- **behaviors**：抽离组件间共有逻辑（如登录态检测、埋点上报）为 Behavior，通过 `behaviors: [behaviorName]` 混入
-- **relations**：父子组件间通过 `relations` 建立关系，配合 `getRelationNodes` 实现深度联动（如 `tabs` + `tab-panel` 组合）
-- **组件导出**（基础库 2.2.3+）：使用 `wx://component-export` behavior 暴露组件方法给父组件通过 `selectComponent` 调用
+- **behaviors**：抽离组件间共有逻辑为 Behavior，通过 `behaviors: [behaviorName]` 混入。常见 Behavior 模板：
+
+  **登录态 Behavior**：
+  ```javascript
+  // behaviors/login-check.js
+  module.exports = Behavior({
+    data: { isLogin: false },
+    lifetimes: {
+      attached() {
+        this.checkLogin()
+      }
+    },
+    methods: {
+      checkLogin() {
+        const token = wx.getStorageSync('token')
+        this.setData({ isLogin: !!token })
+        return !!token
+      }
+    }
+  })
+  ```
+
+  **埋点上报 Behavior**：
+  ```javascript
+  // behaviors/report.js
+  module.exports = Behavior({
+    properties: {
+      pageName: { type: String, value: '' }
+    },
+    methods: {
+      report(action, data = {}) {
+        wx.reportAnalytics(action, { page: this.data.pageName, ...data })
+      }
+    }
+  })
+  ```
+  
+  **注意**：Behavior 的字段（data/properties/methods/lifetimes）会和组件的同名属性合并。data 和 properties 使用**深度合并**（组件优先），methods 和 lifetimes 使用**覆盖合并**（Behavior 的会被组件覆盖，同名 methods 会依次执行）。避免在 Behavior 和组件中定义同名方法导致意外覆盖
+
+- **relations**：父子组件间通过 `relations` 建立关系，配合 `getRelationNodes` 实现深度联动（如 `tabs` + `tab-panel` 组合）：
+  ```javascript
+  // 父组件（如 tabs）
+  relations: {
+    '../tab-panel/tab-panel': { type: 'child', linked() { /* 注册子组件 */ } }
+  }
+  // 子组件（如 tab-panel）
+  relations: {
+    '../tabs/tabs': { type: 'parent', linked(target) { /* 获取父组件引用 */ } }
+  }
+  ```
+
+- **组件导出**（基础库 2.2.3+）：使用 `wx://component-export` behavior 暴露组件方法给父组件通过 `selectComponent` 调用：
+  ```javascript
+  Component({
+    behaviors: ['wx://component-export'],
+    export() {
+      return { myMethod: this.myMethod.bind(this) }
+    },
+    methods: {
+      myMethod() { /* 外部可调用的方法 */ }
+    }
+  })
+  // 父组件调用：this.selectComponent('#cmp').myMethod()
+  ```
 
 **WXS 原则**：
 - WXS 运行在视图层，**不能调用任何 wx.* API**，不能修改 data，不支持 ES6+（用 `var` + function），不支持正则表达式
@@ -282,6 +344,7 @@ Page({
 
 - 如果是首页（启动页），放在数组**第一位**
 - 如果是 tabBar 页，同时追加到 `tabBar.list`，包含 `pagePath`, `text`, `iconPath`, `selectedIconPath`（iconPath 可以先用占位说明，提示用户后续替换）
+- 如果使用了自定义 tabBar（app.json 中 `tabBar.custom: true`），则不需要在 tabBar.list 中设置 iconPath/selectedIconPath（由 `custom-tab-bar/index` 组件控制），但仍需保证 `tabBar.list` 配置完整
 - 其他页面追加到末尾
 
 > **重要**：每开发一个 page 必须更新 app.json，否则编译会报错。
@@ -468,6 +531,64 @@ wx.navigateTo({ url: '/packageA/pages/detail/detail?id=' + id })
 
 **Step 4**：分包内引用主包组件用 `/components/xxx` 绝对路径；引用同分包内组件可用相对路径。禁止主包页引用分包组件。
 
+#### 独立分包（independent: true）
+
+当主Agent 标注分包为独立分包时（`"independent": true`），注意事项：
+
+- **不能 require 主包任何代码**：独立分包运行时不加载主包，`require('../../utils/request.js')` 会失败。需要在独立分包内 **独立复制一份工具模块** 到分包目录下（如 `packageA/utils/request.js`），或使用分包异步化 `require.async`（基础库 2.24.4+）
+- **getApp 需 allowDefault**：`const app = getApp({allowDefault: true})`，主包未加载时返回默认空对象，不报错
+- **主包生命周期延迟触发**：从独立分包启动时，主包的 `onLaunch` 和首次 `onShow` 会在首次进入主包或其他普通分包时才触发
+- **内联体积约束**：独立分包自身同样 ≤ 2MB，不能依赖主包资源（图片、样式、JS 均不可）
+
+#### 分包预下载 preloadRule
+
+当主Agent 指定预下载策略时，在 `app.json` 的 `preloadRule` 字段中配置：
+
+```json
+{
+  "preloadRule": {
+    "pages/index/index": {
+      "network": "all",
+      "packages": ["packageA"]
+    }
+  }
+}
+```
+
+- `network`：`all`（所有网络）或 `wifi`（仅 WiFi）
+- `packages`：预下载的分包 name 数组
+- 同分包所有页面共享 **2MB** 预下载额度
+
+#### 分包异步化（跨包引用）
+
+基础库 2.24.4+ 支持跨分包引用组件和 JS：
+
+**组件占位（componentPlaceholder）**：
+```json
+{
+  "usingComponents": {
+    "heavy-button": "/packageA/components/heavy-button"
+  },
+  "componentPlaceholder": {
+    "heavy-button": "view"
+  }
+}
+```
+`componentPlaceholder` 映射表示在分包加载完成前，用内置组件 `view` 占位。
+
+**JS 异步引用**：
+```javascript
+// 回调风格
+require('../subPackageB/utils.js', function(utils) {
+  console.log(utils.whoami)
+})
+
+// Promise 风格
+require.async('../commonPackage/index.js').then(function(pkg) {
+  pkg.getPackageName()
+})
+```
+
 ### B. 云开发 cloudfunctions
 
 当需求文档明确使用云开发（小程序云）时：
@@ -499,7 +620,57 @@ await wx.cloud.callFunction({ name: 'login', data: { /* 入参 */ } })
 
 **Step 4**：`app.js` 的 `onLaunch` 中必须先 `wx.cloud.init({ env: 'your-env-id' })`，env-id 用 `'your-env-id'` 占位，并在 lessons-learned.md 追加"用户需在云开发控制台创建环境后替换 env-id"。
 
-### C. TypeScript / SCSS 等预处理器
+### C. 自定义 tabBar
+
+当 app.json 配置 `"tabBar": { "custom": true, ... }` 时，需创建 `custom-tab-bar/index` 组件：
+
+**custom-tab-bar/index.json**：
+```json
+{
+  "component": true,
+  "usingComponents": {}
+}
+```
+
+**custom-tab-bar/index.js**：
+```javascript
+Component({
+  data: {
+    selected: 0,
+    list: [
+      { "pagePath": "/pages/index/index", "text": "首页", "iconPath": "images/home.png", "selectedIconPath": "images/home-active.png" },
+      { "pagePath": "/pages/profile/profile", "text": "我的", "iconPath": "images/profile.png", "selectedIconPath": "images/profile-active.png" }
+    ]
+  },
+  methods: {
+    setSelected(index) {
+      this.setData({ selected: index })
+    },
+    switchTab(e) {
+      const data = e.currentTarget.dataset
+      wx.switchTab({ url: data.path })
+    }
+  }
+})
+```
+
+**custom-tab-bar/index.wxml**：
+```xml
+<view class="tab-bar {{selected === 0 ? 'tab-bar--fixed' : ''}}">
+  <view class="tab-bar__item {{index === selected ? 'tab-bar__item--active' : ''}}" wx:for="{{list}}" wx:key="pagePath" data-path="{{item.pagePath}}" data-index="{{index}}" bindtap="switchTab">
+    <image class="tab-bar__icon" src="{{index === selected ? item.selectedIconPath : item.iconPath}}" mode="aspectFit" />
+    <text class="tab-bar__label">{{item.text}}</text>
+  </view>
+</view>
+```
+
+**关键规则**：
+1. 组件路径**必须**是 `custom-tab-bar/index`（框架硬编码，不可更改）
+2. `setSelected` 方法名固定，框架自动调用通知切换
+3. 自定义 tabBar 不显示官方 badge，需自行实现角标
+4. 基础库要求 ≥ 2.5.0
+
+### D. TypeScript / SCSS 等预处理器
 
 **默认输出 JS / WXSS**。仅当需求文档明确要求 TypeScript 或 SCSS/LESS 时：
 

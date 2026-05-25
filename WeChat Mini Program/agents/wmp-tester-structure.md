@@ -61,6 +61,7 @@ memory: project
 | J4 | component 必填字段 | component 类的 json 必须有 `"component": true` |
 | J5 | page 路径已注册（仅 page） | 该 page 路径已存在于 app.json 的 pages 数组中 |
 | J6 | tabBar 同步（仅 tabBar 页） | 如声明为 tabBar 页，必须存在于 app.json 的 tabBar.list 中 |
+| J7 | 全局 usingComponents（可选） | 如 app.json 顶层声明 `usingComponents`，对应组件路径指向真实存在的文件 |
 
 #### 3.3 WXML 结构检查
 
@@ -98,11 +99,21 @@ memory: project
 | # | 检查项 | 通过标准 |
 |---|--------|----------|
 | C1 | styleIsolation 合规 | 组件 json 样式隔离值只使用 `isolated` / `apply-shared` / `shared` 三者之一 |
+| C1b | Behavior 字段无冲突 | 组件引用的多个 Behavior 之间无同名字段冲突（data/properties 使用深度合并，确保组件侧不意外覆盖 Behavior 的关键数据） |
 | C2 | virtualHost 布尔值 | 如设置 `virtualHost`，值为 `true` 或 `false`（合法 JSON） |
 | C3 | pureDataPattern 合法 | 如设置 `pureDataPattern`，为正则表达式如 `/^_/` |
 | C4 | componentExport 行为 | 如使用 `wx://component-export`，组件已实现 `export()` 方法定义导出 |
 
-#### 3.7 Skyline 渲染引擎检查
+#### 3.7 基础库版本兼容检查
+
+| # | 检查项 | 通过标准 |
+|---|--------|----------|
+| V1 | API 版本匹配 | 代码中调用的 API 最低基础库版本 ≤ `project.config.json` 中 `libVersion` |
+| V2 | canIUse 降级 | 使用了较新 API（如隐私辅助 API 2.32.3+）且未使用 `wx.canIUse` 降级时给出建议 |
+| V3 | Skyline 版本要求 | 启用 Skyline 时 `libVersion` ≥ 3.0.0 |
+| V4 | 分包异步化版本 | 使用 `require.async` / `componentPlaceholder` 时 `libVersion` ≥ 2.24.4 |
+
+#### 3.8 Skyline 渲染引擎检查
 
 > 仅在检测到 app.json 的 `renderer` 为 `skyline` 时执行：
 
@@ -114,7 +125,20 @@ memory: project
 | K4 | 自定义导航栏 | 每个 page 的 json 必须配置 `"navigationStyle": "custom"`（Skyline 不支持原生导航栏） |
 | K5 | 无 WebView 残留属性 | 页面 wxml 中没有 `enablePullDownRefresh` 等与全局滚动相关的配置 |
 
-#### 3.8 app.json 联动检查（每批结束附加一次）
+#### 3.9 分包与预下载检查
+
+> 仅在项目使用 subPackages 时执行：
+
+| # | 检查项 | 通过标准 |
+|---|--------|----------|
+| SP1 | 分包注册正确 | 分包 page 在 `subPackages` 中注册而非 `pages` 数组（独立包用 `independent: true`） |
+| SP2 | 独立分包隔离 | 独立分包内的 JS 不 require 主包模块（检查 `require('../../utils/')` 类引用） |
+| SP3 | 独立分包 getApp | 独立分包中使用 `getApp({allowDefault: true})` 而非 `getApp()` |
+| SP4 | 预下载路径有效 | `preloadRule` 中 `packages` 引用的分包 name 在 `subPackages` 中存在 |
+| SP5 | 分包异步化配置 | 如使用 `componentPlaceholder`，占位组件名（如 `"view"`）是内置组件 |
+| SP6 | 跨包跳转路径 | 分包间的 `wx.navigateTo` 使用以 `/` 开头的绝对路径 |
+
+#### 3.10 app.json 联动检查（每批结束附加一次）
 
 > 仅当本批含 page 类型任务时执行：
 

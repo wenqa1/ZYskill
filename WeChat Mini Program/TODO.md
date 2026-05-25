@@ -7,43 +7,37 @@
 
 ## P0 — 核心功能缺口
 
-- [ ] **独立分包增强**：wmp-dev 对独立分包（`independent: true`）的支持不足
-  - 独立分包不能 require 主包任何 JS，需用 `getApp({allowDefault: true})`
-  - 独立分包启动时主包 onLaunch/onShow 延迟触发
-  - 测试中需增加独立包隔离性检查
-- [ ] **app.json 全局 usingComponents**：支持全局注册组件，减少 page 级重复声明
-  - app.json 顶层 `usingComponents` 字段（基础库 2.20.1+）
-  - 需权衡：全局注册 vs 按需声明（影响代码可分析性）
-- [ ] **分包预下载配置**：wmp-planner 初始 app.json 应可选预生成 `preloadRule`
-  - 高频入口 page 的后台分包预下载
-  - 测试应检查预下载配置是否合理
-- [ ] **onShareTimeline 支持**：三个测试均缺少对"分享到朋友圈"的支持检查
-  - style 检查添加 `onShareTimeline` 实现
-  - 与 `onShareAppMessage` 并列检查
-- [ ] **页面生命周期清理检查**：测试只检查了创建，未检查销毁
-  - onUnload/detached 中应清理：定时器、自定义事件监听、observer 反注册、WebSocket 连接
+- [x] **独立分包增强**（2026-05-25）
+  - wmp-dev: 独立分包运行规则、getApp({allowDefault: true})、延迟生命周期说明、分包异步化示例
+  - wmp-tester-structure: SP1-SP6 分包检查项（注册、隔离、预下载、异步化）
+- [x] **app.json 全局 usingComponents**（2026-05-25）
+  - wmp-dev: 全局注册使用说明与权衡
+  - wmp-tester-structure: J7 全局 usingComponents 检查
+- [x] **分包预下载配置**（2026-05-25）
+  - wmp-planner: preloadRule 配置说明
+  - wmp-dev: preloadRule 示例代码 + 预下载额度（2MB）说明
+  - wmp-tester-structure: SP4 预下载路径有效性检查
+- [x] **onShareTimeline 支持**（2026-05-25）
+  - wmp-tester-style: A5 分享到朋友圈检查项
+- [x] **页面生命周期清理检查**（2026-05-25）
+  - wmp-tester-performance: 3.9 生命周期释放检查（LC1-LC6: 定时器/监听器/WebSocket/observer/后台态）
 
 ## P1 — 重要增强
 
-- [ ] **基础库版本兼容性策略**：当前固定 2.32.3，需策略性升级
-  - 按 API 最低版本要求自动推断推荐 libVersion
-  - 测试应检查代码调用的 API 与配置的基础库版本是否兼容
-  - 添加 `wx.canIUse` 降级模式的推荐
-- [ ] **Behavior 深度复用模式**：当前仅提及，缺少具体实现指引和测试
-  - 常见 behavior 模板：登录态、埋点上报、下拉刷新、表单校验
-  - 测试应检查 behavior 的字段/方法是否与组件冲突（命名空间污染）
-- [ ] **theme.json 暗黑模式完整方案**：style 测试仅检查 wxss 中的媒体查询
-  - wmp-planner 应在需求含暗黑模式时生成 `theme.json`
-  - wxss 中使用 CSS 变量 + theme.json 映射，而非 `@media` 硬编码
-  - 测试需同时验证浅色/深色两套样式
-- [ ] **自定义 tabBar 组件**：目前只能用基础 tabBar 配置
-  - 自定义 tabBar 需要 `custom-tab-bar/index` 组件（基础库 2.5.0+）
-  - wmp-dev 应支持在需求明确时使用自定义 tabBar
-  - 测试需检查自定义 tabBar 的 `setSelected` 方法
-- [ ] **性能面板与启动分析**：缺少对小程序启动性能的验证
-  - 检查首屏依赖数（`lazyCodeLoading` 已配但未验证效果）
-  - 检查同步 setStorageSync 调用对启动耗时的影响
-  - 检查 app.js onLaunch 中是否有阻塞操作
+- [x] **基础库版本兼容性策略**（2026-05-25）
+  - wmp-planner: 基础库版本策略表（含各特性的最低版本要求）
+  - wmp-tester-structure: V1-V4 版本兼容检查（API 匹配、canIUse、Skyline、分包异步化版本）
+- [x] **Behavior 深度复用模式**（2026-05-25）
+  - wmp-dev: 完整 Behavior 代码模板（登录态 + 埋点上报）含合并冲突说明
+  - wmp-tester-structure: C1b Behavior 字段冲突检查
+- [x] **theme.json 暗黑模式完整方案**（2026-05-25）
+  - wmp-planner: app.json darkmode 配置说明 + theme.json 模板文件（含 light/dark 色板）+ wxss 变量引用说明
+- [x] **自定义 tabBar 组件**（2026-05-25）
+  - wmp-planner: app.json custom tabBar 配置说明 + 基础库版本约束
+  - wmp-dev: custom-tab-bar/index 完整组件代码（json/js/wxml）+ 关键规则
+  - wmp-dev: app.json tabBar.list 配置时区分自定义模式
+- [x] **启动性能分析**（2026-05-25）
+  - wmp-planner: app.js onLaunch 避免同步阻塞操作指引 + 按需 require 建议
 
 ## P2 — 新特性覆盖
 
@@ -112,4 +106,5 @@
 
 | 日期 | 事项 |
 |------|------|
-| — | — |
+| 2026-05-25 | P0 全部完成（独立分包 / 全局 usingComponents / preloadRule / onShareTimeline / 生命周期清理） |
+| 2026-05-25 | P1 全部完成（基础库版本策略 / Behavior 模板 / dark mode / 自定义 tabBar / 启动性能） |

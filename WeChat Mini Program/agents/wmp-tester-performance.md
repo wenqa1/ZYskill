@@ -130,6 +130,17 @@ memory: project
 | EH3 | 接口空数据降级 | 接口返回空数组/null 时页面不崩溃，有空态展示 |
 | EH4 | 网络断开降级 | 关键页面可监听 wx.onNetworkStatusChange 或在请求失败时提示"检查网络" |
 
+#### 3.9 生命周期释放检查
+
+| # | 检查项 | 通过标准 |
+|---|--------|----------|
+| LC1 | 定时器清理 | `setInterval` / `setTimeout` 在 `onUnload`(page) 或 `detached`(component) 中调用 `clearInterval` / `clearTimeout` |
+| LC2 | 事件监听反注册 | `wx.onLocationChange` / `wx.onNetworkStatusChange` / `wx.onBLEConnectionStateChange` 等监听器在页面销毁时调用 `wx.offXxx` 反注册 |
+| LC3 | 自定义事件清理 | 组件 `detached` 中清理全局自定义事件监听（如 EventBus / emitter 的 off 调用） |
+| LC4 | WebSocket 关闭 | 页面级 WebSocket 连接在 `onUnload` 中调用 `wx.closeSocket` |
+| LC5 | observer 反注册 | 组件 `detached` 中清理 `wx.onCompassChange` 等持续性监听器 |
+| LC6 | 后台态停止操作 | 页面 `onHide` 时暂停不必要的定时器/轮询，`onShow` 时恢复 |
+
 ### 4. 判定标准
 
 **PASS**：所有检查项通过，或仅有 LOW 级别建议

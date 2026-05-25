@@ -97,6 +97,7 @@ memory: project
 | A2 | 颜色对比度 | 主要文本与背景对比度 ≥ 4.5:1（深色文本 #333 on #f5f5f5 OK；浅灰 #ccc on #fff 不达标） |
 | A3 | navigationBarTitleText | page 的 json 设置了 `navigationBarTitleText`，且与当前内容匹配 |
 | A4 | 转发分享 | 关键页面（详情、列表）实现了 `onShareAppMessage`（除非业务明确不需要） |
+| A5 | 分享到朋友圈 | 如页面实现了 `onShareAppMessage`，评估是否需要同时实现 `onShareTimeline`（基础库 2.11.3+）。分享朋友圈时不支持自定义文案，只需确认页面可被分享 |
 
 #### 3.6 微信平台特性检查（按需）
 

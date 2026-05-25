@@ -124,12 +124,18 @@ mkdir -p {OUTPUT_DIR}/test-reports
 ```
 
 > **重要**：`pages` 数组初始化为空，由 wmp-dev 在开发每个 page 时按顺序追加。`tabBar.list` 也是空数组，开发到 tabBar 页时由 wmp-dev 补全。
+>
+> **自定义 tabBar**：当需求要求灵活的 tabBar 样式（如渐变背景、图标变化、中间突出按钮）时，使用自定义 tabBar 方案。在 app.json 的 tabBar 配置中设置 `"custom": true`，并创建 `custom-tab-bar/index` 组件（含 index.js/index.json/index.wxml/index.wxss）。自定义 tabBar 组件需实现 `setSelected` 方法供框架调用（当页面切换时通知组件更新选中态），基础库要求 2.5.0+。注意：自定义 tabBar 的组件路径固定为 `custom-tab-bar/index`，不可更改。
 
 > **性能优化**：始终在 app.json 追加 `"lazyCodeLoading": "requiredComponents"`，该配置让小程序按需注入自定义组件代码，减少首屏渲染压力。
 
 > **隐私预备**：如需求文档涉及用户位置/相册/摄像头/手机号等权限，在 app.json 的 `permission` 字段预配置用途描述（如 `"scope.userLocation": { "desc": "获取您的位置以提供附近服务" }`）。主Agent后续会做隐私合规检查。
+>
+> **暗黑模式**：如需求文档要求支持深色模式，在 app.json 追加 `"darkmode": true` + `"themeLocation": "theme.json"`，并另行创建 `theme.json` 文件（见步骤 ⑥-b）。wxss 中使用 CSS 变量（如 `--bg-color`）配合 `theme.json` 的映射表实现主题切换，而非 `@media (prefers-color-scheme: dark)` 硬编码。
 
 #### ④ app.js — 全局逻辑
+
+> **启动性能注意事项**：app.js 的 `onLaunch` 中避免同步阻塞操作（如大量 `sync` 存储读写、同步网络请求）。`wx.getStorageSync` 调用建议控制在 3 次以内，大数据量使用异步 `wx.getStorage`。`lazyCodeLoading: "requiredComponents"` 已配置减少首屏代码注入，但全局 `require` 语句仍会合并到首屏包中。非首屏需要的工具模块改为按需 `require`。
 
 ```javascript
 App({
@@ -263,6 +269,43 @@ page {
 > **appid 占位**：写入 `"touristappid"` 作为占位符，并在 dev-plan.md 末尾"待办事项"中提醒用户填入真实 appid。
 >
 > **Skyline 渲染引擎**：如需求文档要求高性能/流畅动画/自定义导航/复杂手势，在本步追加 `"renderer": "skyline"` + `"componentFramework": "glass-easel"` + `"rendererOptions"` 到 app.json。默认为传统 WebView 渲染。
+>
+> **基础库版本策略**：
+>   - 默认 2.32.3（稳定、覆盖面广，支持绝大多数现代 API）
+>   - 如需求涉及以下特性，相应升级最低版本：
+>     - 分包异步化 / `componentPlaceholder` / `require.async` → 2.24.4+
+>     - 全局 `usingComponents`（app.json 顶层） → 2.20.1+
+>     - 隐私辅助 API（`wx.getPrivacySetting` / `wx.requirePrivacyAuthorize`） → 2.32.3+
+>     - Skyline 渲染引擎 → 3.0.0+（推荐最新）
+>     - 共享元素动画 → 3.3.0+
+>   - 如用户未指定，使用保守版本（2.32.3），在 dev-plan.md 中注明"如需更高版本 API，请升级基础库"
+
+#### ⑥-b theme.json — 暗黑模式主题配置
+
+> 仅当需求文档要求支持暗黑模式时创建。与 app.json 中的 `"darkmode": true` + `"themeLocation": "theme.json"` 配合使用。
+
+```json
+{
+  "light": {
+    "bgColor": "#ffffff",
+    "textColor": "#333333",
+    "cardBg": "#f5f5f5",
+    "borderColor": "#e0e0e0",
+    "navBg": "#ffffff",
+    "tabBarBg": "#ffffff"
+  },
+  "dark": {
+    "bgColor": "#1a1a1a",
+    "textColor": "#e0e0e0",
+    "cardBg": "#2a2a2a",
+    "borderColor": "#3a3a3a",
+    "navBg": "#1a1a1a",
+    "tabBarBg": "#1a1a1a"
+  }
+}
+```
+
+> 在 wxss 中使用 `var(--bgColor)` 引用这些变量，小程序框架会根据系统主题自动切换。注意：theme.json 中的 key 使用 camelCase，wxss 中使用 `--` 前缀引用。基础库 2.11.3+ 支持暗黑模式。
 
 #### ⑦ sitemap.json — 索引配置
 
